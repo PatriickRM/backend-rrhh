@@ -1,0 +1,22 @@
+server:
+  port:8080
+
+spring:
+  datasource:
+    url: jdbc:mysql://localhost:3306/bd_rrhh
+    username: root
+    password: patrick12
+    driver-class-name: com.mysql.cj.jdbc.Driver
+
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: true
+    properties:
+      hibernate:
+        format_sql: true
+
+security:
+  jwt:
+    secret-key: clave_super_mega_secreta_difficile_12121212
+    expiration: 400000
