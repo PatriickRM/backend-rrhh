@@ -3,7 +3,7 @@ server:
 
 spring:
   datasource:
-    url: jdbc:mysql://localhost:3306/bd_rrhh
+    url: jdbc:mysql://localhost:3306/rrhh_system
     username: root
     password: patrick12
     driver-class-name: com.mysql.cj.jdbc.Driver
