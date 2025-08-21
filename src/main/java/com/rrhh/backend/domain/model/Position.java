@@ -26,7 +26,10 @@ public class Position {
     @Column(precision = 10, scale = 2)
     private BigDecimal baseSalary;
 
-    @ManyToOne
+    @Column(nullable = false)
+    private Boolean enabled = true;
+
+    @ManyToOne(optional = false, fetch = FetchType.LAZY)
     @JoinColumn(name="id_department", nullable = false)
     private Department department;
 }

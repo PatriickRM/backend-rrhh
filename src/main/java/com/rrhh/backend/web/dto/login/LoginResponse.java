@@ -1,4 +1,4 @@
-package com.rrhh.backend.web.dto;
+package com.rrhh.backend.web.dto.login;
 
 import lombok.Builder;
 import lombok.Data;

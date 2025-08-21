@@ -4,15 +4,14 @@ import com.rrhh.backend.application.exception.ErrorSistema;
 import com.rrhh.backend.application.service.AuthService;
 import com.rrhh.backend.security.CustomUserDetails;
 import com.rrhh.backend.security.util.JwtUtil;
-import com.rrhh.backend.web.dto.LoginRequest;
-import com.rrhh.backend.web.dto.LoginResponse;
+import com.rrhh.backend.web.dto.login.LoginRequest;
+import com.rrhh.backend.web.dto.login.LoginResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
-import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.security.core.GrantedAuthority;
 
@@ -22,7 +21,6 @@ public class AuthServiceImpl implements AuthService {
     private final AuthenticationManager authenticationManager;
     private final UserDetailsService userDetailsService;
     private final JwtUtil jwtUtil;
-    private final PasswordEncoder passwordEncoder;
 
     @Override
     public LoginResponse authenticate(LoginRequest request) {

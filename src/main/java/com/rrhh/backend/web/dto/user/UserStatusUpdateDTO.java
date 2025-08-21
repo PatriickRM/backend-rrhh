@@ -1,4 +1,4 @@
-package com.rrhh.backend.web.dto;
+package com.rrhh.backend.web.dto.user;
 
 import jakarta.validation.constraints.NotNull;
 import lombok.Builder;

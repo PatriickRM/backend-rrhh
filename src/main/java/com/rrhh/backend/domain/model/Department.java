@@ -29,6 +29,9 @@ public class Department {
     @Column(length = 255)
     private String description;
 
+    @Column(nullable = false)
+    private Boolean enabled = true;
+
     @OneToOne
     @JoinColumn(name="id_head_employee")
     private Employee head;

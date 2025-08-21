@@ -3,9 +3,9 @@ package com.rrhh.backend.application.mapper.impl;
 import com.rrhh.backend.application.mapper.UserMapper;
 import com.rrhh.backend.domain.model.Role;
 import com.rrhh.backend.domain.model.User;
-import com.rrhh.backend.web.dto.UserRequestDTO;
-import com.rrhh.backend.web.dto.UserResponseDTO;
-import com.rrhh.backend.web.dto.UserStatusUpdateDTO;
+import com.rrhh.backend.web.dto.user.UserRequestDTO;
+import com.rrhh.backend.web.dto.user.UserResponseDTO;
+import com.rrhh.backend.web.dto.user.UserStatusUpdateDTO;
 import org.springframework.stereotype.Component;
 
 import java.util.Set;

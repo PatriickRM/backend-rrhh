@@ -1,8 +1,8 @@
 package com.rrhh.backend.application.service;
 
-import com.rrhh.backend.web.dto.UserRequestDTO;
-import com.rrhh.backend.web.dto.UserResponseDTO;
-import com.rrhh.backend.web.dto.UserStatusUpdateDTO;
+import com.rrhh.backend.web.dto.user.UserRequestDTO;
+import com.rrhh.backend.web.dto.user.UserResponseDTO;
+import com.rrhh.backend.web.dto.user.UserStatusUpdateDTO;
 
 import java.util.List;
 

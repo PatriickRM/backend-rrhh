@@ -1,8 +1,8 @@
 package com.rrhh.backend.web.controller;
 
 import com.rrhh.backend.application.service.AuthService;
-import com.rrhh.backend.web.dto.LoginRequest;
-import com.rrhh.backend.web.dto.LoginResponse;
+import com.rrhh.backend.web.dto.login.LoginRequest;
+import com.rrhh.backend.web.dto.login.LoginResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
