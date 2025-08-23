@@ -3,6 +3,7 @@ package com.rrhh.backend.application.service.impl;
 import com.rrhh.backend.application.exception.ErrorSistema;
 import com.rrhh.backend.application.mapper.UserMapper;
 import com.rrhh.backend.application.service.UserService;
+import com.rrhh.backend.domain.model.Position;
 import com.rrhh.backend.domain.model.Role;
 import com.rrhh.backend.domain.model.User;
 import com.rrhh.backend.domain.repository.RoleRepository;
@@ -16,6 +17,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.Set;
 
 @Service
 @RequiredArgsConstructor
@@ -71,5 +73,19 @@ public class UserServiceImpl implements UserService {
         }
         user.setEnabled(false);
         return userMapper.toDto(userRepository.save(user));
+    }
+
+    public void updateUserRoleBasedOnPosition(User user, Position position) {
+        Role headRole = roleRepository.findByName("HEAD").orElseThrow(() -> new ErrorSistema("Rol HEAD no encontrado"));
+        Role employeeRole = roleRepository.findByName("EMPLOYEE").orElseThrow(() -> new ErrorSistema("Rol EMPLOYEE no encontrado"));
+
+        Set<Role> currentRoles = user.getRoles();
+        //Si tiene posicion de "Jefe de dep" tendra el rol HEAD sino Employee
+        Role targetRole = position.getTitle().equalsIgnoreCase("Jefe de Departamento") ? headRole : employeeRole;
+
+        if(!currentRoles.contains(targetRole)){
+            //Se actualiza el rol
+            user.setRoles(Set.of(targetRole));
+        }
     }
 }

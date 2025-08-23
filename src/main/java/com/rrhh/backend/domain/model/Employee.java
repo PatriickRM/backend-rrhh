@@ -5,7 +5,6 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-import java.math.BigDecimal;
 import java.time.LocalDate;
 
 @Entity
@@ -45,6 +44,9 @@ public class Employee {
     @Column(nullable = false)
     private LocalDate hireDate;
 
+    @Column(nullable = false)
+    private LocalDate contractEndDate;
+
     @ManyToOne(optional = false)
     @JoinColumn(name="id_position", nullable = false)
     private Position position;
@@ -54,14 +56,11 @@ public class Employee {
     private Department department;
 
     @Column(nullable = false)
-    private BigDecimal salary;
+    private Double salary;
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     private EmployeeStatus status;
-
-    @Column(nullable = true)
-    private String photoUrl;
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)

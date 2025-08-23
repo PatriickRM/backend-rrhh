@@ -4,8 +4,8 @@ import com.rrhh.backend.application.exception.ErrorSistema;
 import com.rrhh.backend.application.mapper.DepartmentMapper;
 import com.rrhh.backend.application.service.DepartmentService;
 import com.rrhh.backend.domain.model.Department;
+import com.rrhh.backend.domain.model.Employee;
 import com.rrhh.backend.domain.repository.DepartmentRepository;
-import com.rrhh.backend.domain.repository.EmployeeRepository;
 import com.rrhh.backend.web.dto.department.DepartmentRequestDTO;
 import com.rrhh.backend.web.dto.department.DepartmentResponseDTO;
 import com.rrhh.backend.web.dto.department.DepartmentStatusUpdateDTO;
@@ -21,7 +21,6 @@ import java.util.List;
 public class DepartmentServiceImpl implements DepartmentService {
     private final DepartmentRepository departmentRepository;
     private final DepartmentMapper departmentMapper;
-    private final EmployeeRepository employeeRepository;
 
     @Override
     @Transactional
@@ -90,5 +89,38 @@ public class DepartmentServiceImpl implements DepartmentService {
                 .stream()
                 .map(departmentMapper::toDto)
                 .toList();
+    }
+
+    @Override
+    public void updateHeadIfChanged(Employee employee) {
+        //Evitar cambios innecesarios
+        if (!employee.getPosition().getTitle().equalsIgnoreCase("HEAD")) {
+            return;
+        }
+        Department department = employee.getDepartment();
+        Employee currentHead = department.getHead();
+
+        // Evitar cambios innecesarios
+        if (currentHead != null && currentHead.getId().equals(employee.getId())) {
+            return;
+        }
+
+        // Asignar nuevo jefe si se actualiza al jefe al agregar empleado
+        department.setHead(employee);
+        departmentRepository.save(department);
+    }
+
+    @Override
+    public void removeHeadIfChanged(Employee employee) {
+        if (employee.getPosition().getTitle().equalsIgnoreCase("HEAD")) {
+            return;
+        }
+        Department department = employee.getDepartment();
+        Employee currentHead = department.getHead();
+
+        if (currentHead != null && currentHead.getId().equals(employee.getId())) {
+            department.setHead(null); //si se remueve al jefe de departamento null
+            departmentRepository.save(department);
+        }
     }
 }
