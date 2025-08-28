@@ -19,4 +19,4 @@ spring:
 security:
   jwt:
     secret-key: clave_super_mega_secreta_difficile_12121212
-    expiration: 400000
+    expiration: 4000000000

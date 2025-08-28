@@ -1,9 +1,7 @@
 package com.rrhh.backend.security.util;
 
 import com.rrhh.backend.application.exception.ErrorSistema;
-import io.jsonwebtoken.Claims;
-import io.jsonwebtoken.Jwts;
-import io.jsonwebtoken.SignatureAlgorithm;
+import io.jsonwebtoken.*;
 import io.jsonwebtoken.security.Keys;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.GrantedAuthority;
@@ -13,6 +11,7 @@ import org.springframework.stereotype.Component;
 import java.security.Key;
 import java.util.Date;
 import java.util.Map;
+import io.jsonwebtoken.security.SignatureException;
 
 @Component
 public class JwtUtil {
@@ -36,8 +35,14 @@ public class JwtUtil {
     public Claims extractAllClaims(String token){
         try {
             return Jwts.parserBuilder().setSigningKey(getSigninKey()).build().parseClaimsJws(token).getBody();
-        } catch (RuntimeException r) {
-            throw new ErrorSistema("Token invalido");
+        } catch (ExpiredJwtException e) {
+            throw new ErrorSistema("Token expirado");
+        } catch (MalformedJwtException e) {
+            throw new ErrorSistema("Token malformado");
+        } catch (SignatureException e) {
+            throw new ErrorSistema("Firma del token inválida");
+        } catch (Exception e) {
+            throw new ErrorSistema("Token inválido: " + e.getMessage());
         }
     }
     public String extractUsername(String token){
