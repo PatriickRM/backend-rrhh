@@ -291,6 +291,18 @@ public class LeaveRequestValidator {
         if (dto.getType() == LeaveType.VACACIONES && isInProbationPeriod(employee)) {
             throw new ErrorSistema("Los empleados que llevan menos de 6 meses no pueden solicitar vacaciones");
         }
+        // Nueva regla: solo una solicitud pendiente a la vez
+        validateOnlyOnePendingRequest(employeeId);
+    }
+
+    private void validateOnlyOnePendingRequest(Long employeeId) {
+        boolean hasPending = leaveRequestRepository.existsByEmployeeIdAndStatusIn(
+                employeeId,
+                List.of(LeaveStatus.PENDIENTE_JEFE, LeaveStatus.PENDIENTE_RRHH)
+        );
+        if (hasPending) {
+            throw new ErrorSistema("Ya tiene una solicitud de permiso pendiente, espere a que sea aprobada o rechazada antes de crear otra.");
+        }
     }
 
     // Métodos auxiliares

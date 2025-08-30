@@ -25,4 +25,5 @@ public class LeaveRequestHeadDTO {
     private String justification;
     private LocalDateTime requestDate;
     private LocalDateTime headResponseDate;
+    private String evidenceImagePath;
 }

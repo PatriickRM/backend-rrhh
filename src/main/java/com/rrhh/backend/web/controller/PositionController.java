@@ -61,4 +61,9 @@ public class PositionController {
     public ResponseEntity<List<PositionResponseDTO>> getByDepartment(@PathVariable Long departmentId) {
         return ResponseEntity.ok(positionService.getPositionsByDepartment(departmentId));
     }
+    @GetMapping("/disabled")
+    public ResponseEntity<List<PositionResponseDTO>> getDisabledPositions() {
+        List<PositionResponseDTO> disabled = positionService.getDisabledPositions();
+        return ResponseEntity.ok(disabled);
+    }
 }

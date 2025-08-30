@@ -40,7 +40,7 @@ public class DepartmentServiceImpl implements DepartmentService {
     @Override
     @Transactional(readOnly = true)
     public List<DepartmentResponseDTO> getAllDepartments() {
-        return departmentRepository.findAll()
+        return departmentRepository.findAllWithHeadAndPositions()
                 .stream()
                 .map(departmentMapper::toDto)
                 .toList();
@@ -94,9 +94,11 @@ public class DepartmentServiceImpl implements DepartmentService {
     @Override
     public void updateHeadIfChanged(Employee employee) {
         //Evitar cambios innecesarios
-        if (!employee.getPosition().getTitle().equalsIgnoreCase("HEAD")) {
+        if (!employee.getPosition().getTitle().equalsIgnoreCase("Jefe de Departamento")) {
             return;
         }
+
+
         Department department = employee.getDepartment();
         Employee currentHead = department.getHead();
 
@@ -112,14 +114,14 @@ public class DepartmentServiceImpl implements DepartmentService {
 
     @Override
     public void removeHeadIfChanged(Employee employee) {
-        if (employee.getPosition().getTitle().equalsIgnoreCase("HEAD")) {
-            return;
+        if (employee.getPosition().getTitle().equalsIgnoreCase("Jefe de Departamento")) {
+            return; // Si sigue siendo jefe, no remover
         }
         Department department = employee.getDepartment();
         Employee currentHead = department.getHead();
 
         if (currentHead != null && currentHead.getId().equals(employee.getId())) {
-            department.setHead(null); //si se remueve al jefe de departamento null
+            department.setHead(null);
             departmentRepository.save(department);
         }
     }

@@ -2,6 +2,7 @@ package com.rrhh.backend.web.controller;
 
 import com.rrhh.backend.application.exception.ErrorSistema;
 import com.rrhh.backend.application.service.LeaveRequestService;
+import com.rrhh.backend.application.utils.FileStorageService;
 import com.rrhh.backend.domain.model.Employee;
 import com.rrhh.backend.domain.repository.EmployeeRepository;
 import com.rrhh.backend.security.CustomUserDetails;
@@ -9,6 +10,8 @@ import com.rrhh.backend.web.dto.leave.LeaveHeadResponseDTO;
 
 import com.rrhh.backend.web.dto.leave.LeaveRequestHeadDTO;
 import lombok.AllArgsConstructor;
+import org.springframework.core.io.Resource;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
@@ -21,6 +24,7 @@ import java.util.List;
 public class HeadLeaveController {
     private final LeaveRequestService leaveRequestService;
     private final EmployeeRepository employeeRepository;
+    private final FileStorageService fileStorageService;
 
     @GetMapping("/pending")
     public ResponseEntity<List<LeaveRequestHeadDTO>> getPendingRequests(Authentication authentication) {
@@ -54,6 +58,13 @@ public class HeadLeaveController {
         Long headEmployeeId = extractEmployeeIdFromAuth(authentication);
         leaveRequestService.respondAsHead(responseDTO, headEmployeeId);
         return ResponseEntity.ok("Respuesta enviada exitosamente");
+    }
+    @GetMapping("/files/{fileName}")
+    public ResponseEntity<Resource> downloadFile(@PathVariable String fileName) {
+        Resource resource = fileStorageService.loadFile(fileName);
+        return ResponseEntity.ok()
+                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + resource.getFilename() + "\"")
+                .body(resource);
     }
 
     private Long extractEmployeeIdFromAuth(Authentication authentication) {

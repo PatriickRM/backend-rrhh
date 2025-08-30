@@ -11,4 +11,6 @@ public interface PositionRepository extends JpaRepository<Position, Long> {
     List<Position> findByTitleContainingIgnoreCase(String title);
     @EntityGraph(attributePaths = "department") // -> Entitygraph para incluir el nombre del departamento con sus posiciones
     List<Position> findByDepartmentId(Long departmentId);
+    @EntityGraph(attributePaths = "department")
+    List<Position> findByEnabledFalse();
 }

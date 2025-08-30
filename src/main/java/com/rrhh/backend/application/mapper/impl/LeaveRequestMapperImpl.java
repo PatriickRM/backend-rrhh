@@ -58,6 +58,7 @@ public class LeaveRequestMapperImpl implements LeaveRequestMapper {
                 .justification(entity.getJustification())
                 .requestDate(entity.getRequestDate())
                 .headResponseDate(entity.getHeadResponseDate())
+                .evidenceImagePath(entity.getEvidenceImagePath())
                 .build();
     }
 
@@ -78,6 +79,7 @@ public class LeaveRequestMapperImpl implements LeaveRequestMapper {
                 .requestDate(entity.getRequestDate())
                 .headResponseDate(entity.getHeadResponseDate())
                 .hrResponseDate(entity.getHrResponseDate())
+                .evidenceImagePath(entity.getEvidenceImagePath())
                 .build();
     }
 

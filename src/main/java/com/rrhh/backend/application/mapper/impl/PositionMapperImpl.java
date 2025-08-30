@@ -26,8 +26,11 @@ public class PositionMapperImpl implements PositionMapper {
                 .title(entity.getTitle())
                 .baseSalary(entity.getBaseSalary())
                 .enabled(entity.getEnabled())
+                .departmentId(entity.getDepartment().getId())
+                .departmentName(entity.getDepartment().getName())
                 .build();
     }
+
 
     @Override
     public void updateEntity(PositionUpdateDTO updateDTO, Position entity) {

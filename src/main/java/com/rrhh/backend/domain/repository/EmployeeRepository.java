@@ -22,5 +22,7 @@ public interface EmployeeRepository extends JpaRepository<Employee, Long> {
     Optional<Employee> findByUserId(@Param("userId") Long userId);
     @Query("SELECT e FROM Employee e WHERE e.id IN (SELECT d.head.id FROM Department d WHERE d.head IS NOT NULL)")
     List<Employee> findDepartmentHeads();
+    @Query("SELECT e FROM Employee e WHERE e.user.username = :username")
+    Optional<Employee> findByUserUsername(@Param("username") String username);
 
 }

@@ -15,4 +15,6 @@ public class PositionResponseDTO {
     private String title;
     private BigDecimal baseSalary;
     private boolean enabled;
+    private Long departmentId;
+    private String departmentName;
 }

@@ -16,4 +16,6 @@ public interface PositionService {
     PositionResponseDTO updatePositionStatus(Long id, PositionStatusUpdateDTO dto);
     List<PositionResponseDTO> getPositionsByName(String titleFilter);
     List<PositionResponseDTO> getPositionsByDepartment(Long departmentId);
+    List<PositionResponseDTO> getDisabledPositions();
+
 }

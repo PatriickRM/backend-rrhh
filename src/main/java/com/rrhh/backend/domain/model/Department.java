@@ -32,7 +32,7 @@ public class Department {
     @Column(nullable = false)
     private Boolean enabled = true;
 
-    @OneToOne
+    @OneToOne(fetch = FetchType.EAGER)
     @JoinColumn(name="id_head_employee")
     private Employee head;
 

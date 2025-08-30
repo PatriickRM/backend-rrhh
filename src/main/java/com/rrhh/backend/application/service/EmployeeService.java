@@ -1,9 +1,7 @@
 package com.rrhh.backend.application.service;
 
 import com.rrhh.backend.domain.model.EmployeeStatus;
-import com.rrhh.backend.web.dto.employee.EmployeeRequestDTO;
-import com.rrhh.backend.web.dto.employee.EmployeeResponseDTO;
-import com.rrhh.backend.web.dto.employee.EmployeeUpdateDTO;
+import com.rrhh.backend.web.dto.employee.*;
 
 import java.time.LocalDate;
 import java.util.List;
@@ -19,4 +17,6 @@ public interface EmployeeService {
     List<EmployeeResponseDTO> getByHireDateRange(LocalDate start, LocalDate end);
     List<EmployeeResponseDTO> getAllEmployees();
     List<EmployeeResponseDTO> filterByStatus(EmployeeStatus status);
+    EmployeeDashboardDTO getEmployeeDashboard(String username);
+    EmployeeStatsDTO getEmployeeStats(String username);
 }

@@ -29,4 +29,5 @@ public class LeaveRequestHRDTO {
         private LocalDateTime requestDate;
         private LocalDateTime headResponseDate;
         private LocalDateTime hrResponseDate;
+        private String evidenceImagePath;
 }

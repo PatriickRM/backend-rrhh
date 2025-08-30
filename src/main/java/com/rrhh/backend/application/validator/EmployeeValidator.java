@@ -103,7 +103,10 @@ public void validateCreate(EmployeeRequestDTO dto) {
             Position position = positionRepository.getReferenceById(dto.getPositionId());
             if ("Jefe de Departamento".equalsIgnoreCase(position.getTitle())) {
                 Department department = departmentRepository.getReferenceById(dto.getDepartmentId());
-                if (department.getHead() != null) {
+                Employee currentHead = department.getHead();
+
+                // Solo lanzar error si hay un jefe distinto al empleado que estamos editando
+                if (currentHead != null && !currentHead.getId().equals(employee.getId())) {
                     throw new ErrorSistema("Este departamento ya tiene un jefe asignado");
                 }
             }

@@ -17,6 +17,8 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.util.List;
+import java.util.stream.Collectors;
+
 @Service
 @Transactional
 @RequiredArgsConstructor
@@ -111,5 +113,12 @@ public class PositionServiceImpl implements PositionService {
                 .map(positionMapper::toDto)
                 .toList();
     }
-
+    @Override
+    @Transactional
+    public List<PositionResponseDTO> getDisabledPositions() {
+        return positionRepository.findByEnabledFalse()
+                .stream()
+                .map(positionMapper::toDto)
+                .collect(Collectors.toList());
+    }
 }

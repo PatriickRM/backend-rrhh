@@ -3,16 +3,12 @@ package com.rrhh.backend.application.service.impl;
 import com.rrhh.backend.application.exception.ErrorSistema;
 import com.rrhh.backend.application.mapper.EmployeeMapper;
 import com.rrhh.backend.application.mapper.UserMapper;
-import com.rrhh.backend.application.service.DepartmentService;
-import com.rrhh.backend.application.service.EmployeeService;
-import com.rrhh.backend.application.service.EmployeeStatusService;
-import com.rrhh.backend.application.service.UserService;
+import com.rrhh.backend.application.service.*;
 import com.rrhh.backend.application.validator.EmployeeValidator;
 import com.rrhh.backend.domain.model.*;
 import com.rrhh.backend.domain.repository.*;
-import com.rrhh.backend.web.dto.employee.EmployeeRequestDTO;
-import com.rrhh.backend.web.dto.employee.EmployeeResponseDTO;
-import com.rrhh.backend.web.dto.employee.EmployeeUpdateDTO;
+import com.rrhh.backend.web.dto.employee.*;
+import com.rrhh.backend.web.dto.leave.LeaveBalanceDTO;
 import com.rrhh.backend.web.dto.user.UserRequestDTO;
 import lombok.AllArgsConstructor;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -39,6 +35,8 @@ public class EmployeeServiceImpl implements EmployeeService {
     private final EmployeeMapper employeeMapper;
     private final DepartmentService departmentService;
     private final EmployeeStatusService employeeStatusService;
+    private final LeaveRequestRepository leaveRequestRepository;
+    private final LeaveRequestService leaveRequestService;
 
     @Override
     @Transactional
@@ -67,11 +65,8 @@ public class EmployeeServiceImpl implements EmployeeService {
 
         Employee employee = employeeMapper.toEntity(dto, saveUser, position, department);
         Employee saveEmployee = employeeRepository.save(employee);
-
-        if("Jefe de Departamento".equalsIgnoreCase(position.getTitle())){
-            department.setHead(saveEmployee);
-            departmentRepository.save(department);
-
+        if ("Jefe de Departamento".equalsIgnoreCase(saveEmployee.getPosition().getTitle())) {
+            departmentService.updateHeadIfChanged(saveEmployee);
         }
         return employeeMapper.toDto(saveEmployee);
     }
@@ -185,5 +180,27 @@ public class EmployeeServiceImpl implements EmployeeService {
         return employees.stream()
                 .map(employeeMapper::toDto)
                 .toList();
+    }
+    @Override
+    public EmployeeStatsDTO getEmployeeStats(String username) {
+        Employee employee = employeeRepository.findByUserUsername(username)
+                .orElseThrow(() -> new ErrorSistema("Empleado no encontrado"));
+        List<LeaveRequest> requests = leaveRequestRepository.findByEmployeeId(employee.getId());
+        return employeeMapper.toStatsDto(requests);
+    }
+    @Override
+    public EmployeeDashboardDTO getEmployeeDashboard(String username) {
+        // Obtener el empleado por username
+        Employee employee = employeeRepository.findByUserUsername(username)
+                .orElseThrow(() -> new ErrorSistema("Empleado no encontrado"));
+
+        //  Obtener las solicitudes de permiso
+        List<LeaveRequest> requests = leaveRequestRepository.findByEmployeeId(employee.getId());
+
+        // Obtener el balance de vacaciones usando el servicio existente
+        LeaveBalanceDTO leaveBalance = leaveRequestService.getEmployeeLeaveBalance(employee.getId());
+
+        // Usar el mapper para crear el dashboard
+        return employeeMapper.toDashboardDto(employee, leaveBalance, requests);
     }
 }

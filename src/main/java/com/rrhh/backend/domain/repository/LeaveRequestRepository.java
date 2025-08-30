@@ -128,4 +128,9 @@ public interface LeaveRequestRepository extends JpaRepository<LeaveRequest, Long
             @Param("startDate") LocalDate startDate,
             @Param("endDate") LocalDate endDate
     );
+
+    boolean existsByEmployeeIdAndStatusIn(Long employeeId, List<LeaveStatus> statuses);
+
+    @Query("SELECT lr FROM LeaveRequest lr WHERE lr.employee.id = :employeeId")
+    List<LeaveRequest> findByEmployeeId(@Param("employeeId") Long employeeId);
 }

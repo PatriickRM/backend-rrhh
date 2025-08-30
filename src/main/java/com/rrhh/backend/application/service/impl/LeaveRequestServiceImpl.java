@@ -84,8 +84,14 @@ public class LeaveRequestServiceImpl implements LeaveRequestService {
                 .orElseThrow(() -> new ErrorSistema("Empleado no encontrado"));
 
         int yearsOfService = calculateYearsOfService(employee.getHireDate());
-        int maxVacationDays = yearsOfService >= 2 ? 30 : 15;
-
+        int maxVacationDays;
+        if (yearsOfService < 1) {
+            maxVacationDays = 0;
+        } else if (yearsOfService < 2) {
+            maxVacationDays = 15;
+        } else {
+            maxVacationDays = 30;
+        }
         LocalDate startOfYear = LocalDate.of(LocalDate.now().getYear(), 1, 1);
         LocalDate endOfYear = LocalDate.of(LocalDate.now().getYear(), 12, 31);
 
