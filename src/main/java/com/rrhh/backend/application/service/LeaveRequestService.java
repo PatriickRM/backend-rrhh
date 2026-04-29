@@ -1,7 +1,9 @@
 package com.rrhh.backend.application.service;
 
 import com.rrhh.backend.domain.model.Employee;
+import com.rrhh.backend.web.dto.common.PagedResponse;
 import com.rrhh.backend.web.dto.leave.*;
+import org.springframework.data.domain.Pageable;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
@@ -33,4 +35,6 @@ public interface LeaveRequestService {
     LeaveRequestHRDTO getRequestDetailForHR(Long requestId);
 
     void respondAsHR(LeaveHRResponseDTO responseDTO);
+
+    PagedResponse<LeaveRequestHRDTO> getAllRequestsForHR(Pageable pageable);
 }

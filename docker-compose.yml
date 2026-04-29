@@ -1,0 +1,90 @@
+version: '3.9'
+
+services:
+
+  # ── Base de datos MySQL ──────────────────────────────────────────────────
+  db:
+    image: mysql:8.0
+    container_name: rrhh_db
+    restart: unless-stopped
+    environment:
+      MYSQL_DATABASE: ${DB_NAME:-rrhh_system}
+      MYSQL_ROOT_PASSWORD: ${DB_ROOT_PASSWORD:-rootpass}
+      MYSQL_USER: ${DB_USERNAME:-rrhh_user}
+      MYSQL_PASSWORD: ${DB_PASSWORD:-rrhh_pass}
+    ports:
+      - "3306:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+      - ./docker/mysql/init.sql:/docker-entrypoint-initdb.d/init.sql:ro
+    networks:
+      - rrhh_network
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-p${DB_ROOT_PASSWORD:-rootpass}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+
+  # ── Aplicación Spring Boot ───────────────────────────────────────────────
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: rrhh_backend
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      # Base de datos
+      SPRING_DATASOURCE_URL: jdbc:mysql://db:3306/${DB_NAME:-rrhh_system}?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=America/Lima
+      SPRING_DATASOURCE_USERNAME: ${DB_USERNAME:-rrhh_user}
+      SPRING_DATASOURCE_PASSWORD: ${DB_PASSWORD:-rrhh_pass}
+      # JWT
+      SECURITY_JWT_SECRET_KEY: ${JWT_SECRET:-cambia_esto_en_produccion_minimo_32_chars}
+      SECURITY_JWT_EXPIRATION: ${JWT_EXPIRATION:-86400000}
+      # JPA
+      SPRING_JPA_HIBERNATE_DDL_AUTO: ${DDL_AUTO:-update}
+      # Uploads
+      UPLOAD_DIR: /app/uploads/leave-evidence/
+      # Perfil
+      SPRING_PROFILES_ACTIVE: ${SPRING_PROFILE:-docker}
+    ports:
+      - "8080:8080"
+    volumes:
+      - uploads_data:/app/uploads
+    networks:
+      - rrhh_network
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost:8080/actuator/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+
+  # ── Adminer (UI para MySQL — solo desarrollo) ────────────────────────────
+  adminer:
+    image: adminer:4.8.1
+    container_name: rrhh_adminer
+    restart: unless-stopped
+    depends_on:
+      - db
+    ports:
+      - "8090:8080"
+    networks:
+      - rrhh_network
+    profiles:
+      - tools   # Solo se levanta con: docker-compose --profile tools up
+
+# ── Volúmenes ────────────────────────────────────────────────────────────────
+volumes:
+  mysql_data:
+    driver: local
+  uploads_data:
+    driver: local
+
+# ── Red interna ──────────────────────────────────────────────────────────────
+networks:
+  rrhh_network:
+    driver: bridge

@@ -2,7 +2,6 @@ package com.rrhh.backend.web.controller;
 
 import com.rrhh.backend.application.exception.ErrorSistema;
 import com.rrhh.backend.application.service.EmployeeService;
-import com.rrhh.backend.domain.repository.EmployeeRepository;
 import com.rrhh.backend.security.CustomUserDetails;
 import com.rrhh.backend.web.dto.employee.EmployeeDashboardDTO;
 import com.rrhh.backend.web.dto.employee.EmployeeStatsDTO;
@@ -19,8 +18,7 @@ import org.springframework.web.bind.annotation.RestController;
 public class EmployeeDashboardController {
 
     private final EmployeeService employeeService;
-    private final EmployeeRepository employeeRepository;
-
+    
     @GetMapping("/dashboard")
     public ResponseEntity<EmployeeDashboardDTO> getDashboard(Authentication authentication) {
         String username = extractUsernameFromAuth(authentication);

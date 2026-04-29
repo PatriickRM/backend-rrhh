@@ -1,49 +1,52 @@
 package com.rrhh.backend.application.service.impl;
 
+import com.rrhh.backend.application.email.EmailService;
 import com.rrhh.backend.application.exception.ErrorSistema;
 import com.rrhh.backend.application.mapper.LeaveRequestMapper;
 import com.rrhh.backend.application.service.LeaveRequestService;
 import com.rrhh.backend.application.utils.FileStorageService;
 import com.rrhh.backend.application.validator.LeaveRequestValidator;
-import com.rrhh.backend.domain.model.Employee;
-import com.rrhh.backend.domain.model.LeaveRequest;
-import com.rrhh.backend.domain.model.LeaveStatus;
-import com.rrhh.backend.domain.model.LeaveType;
+import com.rrhh.backend.domain.model.*;
 import com.rrhh.backend.domain.repository.EmployeeRepository;
 import com.rrhh.backend.domain.repository.LeaveRequestRepository;
+import com.rrhh.backend.web.dto.common.PagedResponse;
 import com.rrhh.backend.web.dto.leave.*;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.time.DayOfWeek;
 import java.time.LocalDate;
-import java.time.LocalDateTime;
 import java.time.Period;
 import java.util.EnumSet;
 import java.util.List;
 import java.util.stream.Collectors;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class LeaveRequestServiceImpl implements LeaveRequestService {
+
     private final LeaveRequestRepository leaveRequestRepository;
     private final EmployeeRepository employeeRepository;
     private final FileStorageService fileStorageService;
     private final LeaveRequestMapper leaveRequestMapper;
     private final LeaveRequestValidator validator;
+    private final EmailService emailService;
 
     @Override
     @Transactional
-    public LeaveRequestCreateDTO createLeaveRequest(LeaveRequestCreateDTO dto, Long employeeId, MultipartFile evidenceFile) {
-        // Usar las validaciones
+    public LeaveRequestCreateDTO createLeaveRequest(
+            LeaveRequestCreateDTO dto, Long employeeId, MultipartFile evidenceFile) {
+
         validator.validateCreate(dto, employeeId);
 
         Employee employee = employeeRepository.findById(employeeId)
                 .orElseThrow(() -> new ErrorSistema("Empleado no encontrado"));
 
-        // Guardar evidencia si existe
         String evidenceImagePath = null;
         if (evidenceFile != null && !evidenceFile.isEmpty()) {
             evidenceImagePath = fileStorageService.storeFile(evidenceFile, employeeId);
@@ -52,16 +55,16 @@ public class LeaveRequestServiceImpl implements LeaveRequestService {
         LeaveRequest leaveRequest = leaveRequestMapper.toEntity(dto, employee, evidenceImagePath);
         leaveRequestRepository.save(leaveRequest);
 
-        return dto; // Retorna el DTO que se usó para crear
+        log.info("Solicitud creada: empleadoId={}, tipo={}, fechas=[{} - {}]",
+                employeeId, dto.getType(), dto.getStartDate(), dto.getEndDate());
+        return dto;
     }
 
     @Override
     @Transactional(readOnly = true)
     public List<LeaveRequestEmployeeDTO> getMyLeaveRequests(Long employeeId) {
         return leaveRequestRepository.findByEmployeeIdOrderByRequestDateDesc(employeeId)
-                .stream()
-                .map(leaveRequestMapper::toEmployeeDTO)
-                .collect(Collectors.toList());
+                .stream().map(leaveRequestMapper::toEmployeeDTO).collect(Collectors.toList());
     }
 
     @Override
@@ -69,11 +72,9 @@ public class LeaveRequestServiceImpl implements LeaveRequestService {
     public LeaveRequestEmployeeDTO getMyLeaveRequestDetail(Long requestId, Long employeeId) {
         LeaveRequest request = leaveRequestRepository.findById(requestId)
                 .orElseThrow(() -> new ErrorSistema("Solicitud no encontrada"));
-
         if (!request.getEmployee().getId().equals(employeeId)) {
             throw new ErrorSistema("No tiene permisos para ver esta solicitud");
         }
-
         return leaveRequestMapper.toEmployeeDTO(request);
     }
 
@@ -83,68 +84,49 @@ public class LeaveRequestServiceImpl implements LeaveRequestService {
         Employee employee = employeeRepository.findById(employeeId)
                 .orElseThrow(() -> new ErrorSistema("Empleado no encontrado"));
 
-        int yearsOfService = calculateYearsOfService(employee.getHireDate());
-        int maxVacationDays;
-        if (yearsOfService < 1) {
-            maxVacationDays = 0;
-        } else if (yearsOfService < 2) {
-            maxVacationDays = 15;
-        } else {
-            maxVacationDays = 30;
-        }
+        int years = calculateYearsOfService(employee.getHireDate());
+        int max   = years < 1 ? 0 : years < 2 ? 15 : 30;
+
         LocalDate startOfYear = LocalDate.of(LocalDate.now().getYear(), 1, 1);
-        LocalDate endOfYear = LocalDate.of(LocalDate.now().getYear(), 12, 31);
+        LocalDate endOfYear   = LocalDate.of(LocalDate.now().getYear(), 12, 31);
 
-        List<LeaveRequest> approvedVacationsThisYear = leaveRequestRepository
-                .findApprovedByEmployeeTypeAndDateRange(employeeId, LeaveType.VACACIONES, startOfYear, endOfYear);
-
-        int usedVacationDays = (int) approvedVacationsThisYear.stream()
-                .mapToLong(lr -> countWorkingDays(lr.getStartDate(), lr.getEndDate()))
-                .sum();
+        int used = (int) leaveRequestRepository
+                .findApprovedByEmployeeTypeAndDateRange(employeeId, LeaveType.VACACIONES, startOfYear, endOfYear)
+                .stream().mapToLong(lr -> countWorkingDays(lr.getStartDate(), lr.getEndDate())).sum();
 
         return LeaveBalanceDTO.builder()
-                .employeeId(employeeId)
-                .employeeName(employee.getFullName())
-                .yearsOfService(yearsOfService)
-                .maxVacationDays(maxVacationDays)
-                .usedVacationDays(usedVacationDays)
-                .availableVacationDays(maxVacationDays - usedVacationDays)
+                .employeeId(employeeId).employeeName(employee.getFullName())
+                .yearsOfService(years).maxVacationDays(max)
+                .usedVacationDays(used).availableVacationDays(max - used)
                 .build();
     }
 
-    // ========================= MÉTODOS PARA JEFE DE DEPARTAMENTO =========================
+    // ── Jefe ──────────────────────────────────────────────────────────────
 
     @Override
     @Transactional(readOnly = true)
     public List<LeaveRequestHeadDTO> getPendingRequestsForHead(Long headEmployeeId) {
-        Employee headEmployee = employeeRepository.findById(headEmployeeId)
+        Employee head = employeeRepository.findById(headEmployeeId)
                 .orElseThrow(() -> new ErrorSistema("Empleado no encontrado"));
-
-        return leaveRequestRepository.findPendingByDepartment(headEmployee.getDepartment().getId())
-                .stream()
-                .map(leaveRequestMapper::toHeadDTO)
-                .collect(Collectors.toList());
+        return leaveRequestRepository.findPendingByDepartment(head.getDepartment().getId())
+                .stream().map(leaveRequestMapper::toHeadDTO).collect(Collectors.toList());
     }
 
     @Override
     @Transactional(readOnly = true)
     public List<LeaveRequestHeadDTO> getAllRequestsForHead(Long headEmployeeId) {
-        Employee headEmployee = employeeRepository.findById(headEmployeeId)
+        Employee head = employeeRepository.findById(headEmployeeId)
                 .orElseThrow(() -> new ErrorSistema("Empleado no encontrado"));
-
-        return leaveRequestRepository.findByDepartment(headEmployee.getDepartment().getId())
-                .stream()
-                .map(leaveRequestMapper::toHeadDTO)
-                .collect(Collectors.toList());
+        return leaveRequestRepository.findByDepartment(head.getDepartment().getId())
+                .stream().map(leaveRequestMapper::toHeadDTO).collect(Collectors.toList());
     }
 
     @Override
     @Transactional(readOnly = true)
     public LeaveRequestHeadDTO getRequestDetailForHead(Long requestId, Long headEmployeeId) {
-        LeaveRequest request = leaveRequestRepository.findByIdAndDepartmentHead(requestId, headEmployeeId)
-                .orElseThrow(() -> new ErrorSistema("Solicitud no encontrada o sin permisos"));
-
-        return leaveRequestMapper.toHeadDTO(request);
+        return leaveRequestMapper.toHeadDTO(
+                leaveRequestRepository.findByIdAndDepartmentHead(requestId, headEmployeeId)
+                        .orElseThrow(() -> new ErrorSistema("Solicitud no encontrada o sin permisos")));
     }
 
     @Override
@@ -153,51 +135,59 @@ public class LeaveRequestServiceImpl implements LeaveRequestService {
         Employee headEmployee = employeeRepository.findById(headEmployeeId)
                 .orElseThrow(() -> new ErrorSistema("Empleado no encontrado"));
 
-        LeaveRequest request = leaveRequestRepository.findByIdAndDepartmentHead(responseDTO.getRequestId(), headEmployeeId)
+        LeaveRequest request = leaveRequestRepository
+                .findByIdAndDepartmentHead(responseDTO.getRequestId(), headEmployeeId)
                 .orElseThrow(() -> new ErrorSistema("Solicitud no encontrada o sin permisos"));
 
         if (request.getStatus() != LeaveStatus.PENDIENTE_JEFE) {
             throw new ErrorSistema("La solicitud ya fue procesada");
         }
 
-        // Usar el mapper para aplicar la respuesta
         leaveRequestMapper.applyHeadResponse(request, responseDTO, headEmployee);
 
-        // Si aprueba, cambiar estado a PENDIENTE_RRHH
         if (responseDTO.getStatus() == LeaveStatus.APROBADO) {
             request.setStatus(LeaveStatus.PENDIENTE_RRHH);
         }
 
         leaveRequestRepository.save(request);
+
+        // ← Notificación async — no bloquea el response HTTP
+        emailService.sendHeadResponseNotification(request);
+
+        log.info("Jefe respondió solicitud id={}: estado={}", request.getId(), request.getStatus());
     }
 
-    // ========================= MÉTODOS PARA RECURSOS HUMANOS =========================
+    // ── RRHH ──────────────────────────────────────────────────────────────
 
     @Override
     @Transactional(readOnly = true)
     public List<LeaveRequestHRDTO> getPendingRequestsForHR() {
         return leaveRequestRepository.findPendingForHR()
-                .stream()
-                .map(leaveRequestMapper::toHRDTO)
-                .collect(Collectors.toList());
+                .stream().map(leaveRequestMapper::toHRDTO).collect(Collectors.toList());
     }
 
     @Override
     @Transactional(readOnly = true)
     public List<LeaveRequestHRDTO> getAllRequestsForHR() {
         return leaveRequestRepository.findAllOrderByRequestDateDesc()
-                .stream()
-                .map(leaveRequestMapper::toHRDTO)
-                .collect(Collectors.toList());
+                .stream().map(leaveRequestMapper::toHRDTO).collect(Collectors.toList());
+    }
+
+    // Versión paginada para el controller
+    @Override
+    @Transactional(readOnly = true)
+    public PagedResponse<LeaveRequestHRDTO> getAllRequestsForHR(Pageable pageable) {
+        return PagedResponse.of(
+                leaveRequestRepository.findAllOrderByRequestDateDesc(pageable)
+                        .map(leaveRequestMapper::toHRDTO));
     }
 
     @Override
     @Transactional(readOnly = true)
     public LeaveRequestHRDTO getRequestDetailForHR(Long requestId) {
-        LeaveRequest request = leaveRequestRepository.findByIdWithDetails(requestId)
-                .orElseThrow(() -> new ErrorSistema("Solicitud no encontrada"));
-
-        return leaveRequestMapper.toHRDTO(request);
+        return leaveRequestMapper.toHRDTO(
+                leaveRequestRepository.findByIdWithDetails(requestId)
+                        .orElseThrow(() -> new ErrorSistema("Solicitud no encontrada")));
     }
 
     @Override
@@ -210,14 +200,17 @@ public class LeaveRequestServiceImpl implements LeaveRequestService {
             throw new ErrorSistema("La solicitud no está pendiente de RRHH");
         }
 
-        request.setStatus(responseDTO.getStatus());
-        request.setHrComment(responseDTO.getComment());
-        request.setHrResponseDate(LocalDateTime.now());
-
+        leaveRequestMapper.applyHRResponse(request, responseDTO, null);
         leaveRequestRepository.save(request);
+
+        // ← Notificación async — email de resolución final al empleado
+        emailService.sendHRResponseNotification(request);
+
+        log.info("RRHH respondió solicitud id={}: estado={}", request.getId(), request.getStatus());
     }
 
-    //Validaciones
+    // ── Auxiliares ────────────────────────────────────────────────────────
+
     private int calculateYearsOfService(LocalDate hireDate) {
         if (hireDate == null) return 0;
         return Period.between(hireDate, LocalDate.now()).getYears();
@@ -227,9 +220,7 @@ public class LeaveRequestServiceImpl implements LeaveRequestService {
         long days = 0;
         LocalDate date = start;
         while (!date.isAfter(end)) {
-            if (!EnumSet.of(DayOfWeek.SATURDAY, DayOfWeek.SUNDAY).contains(date.getDayOfWeek())) {
-                days++;
-            }
+            if (!EnumSet.of(DayOfWeek.SATURDAY, DayOfWeek.SUNDAY).contains(date.getDayOfWeek())) days++;
             date = date.plusDays(1);
         }
         return days;

@@ -1,10 +1,7 @@
 package com.rrhh.backend.domain.model;
 
 import jakarta.persistence.*;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import lombok.*;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -15,7 +12,8 @@ import java.time.LocalDateTime;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class LeaveRequest {
+@EqualsAndHashCode(callSuper = false)
+public class LeaveRequest extends Auditable {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -32,7 +30,7 @@ public class LeaveRequest {
     private LocalDate endDate;
 
     @Enumerated(EnumType.STRING)
-    @Column(nullable = false, length = 20)
+    @Column(nullable = false, length = 25)
     private LeaveType type;
 
     @Enumerated(EnumType.STRING)
@@ -58,6 +56,5 @@ public class LeaveRequest {
     private LocalDateTime requestDate;
 
     private LocalDateTime headResponseDate;
-
     private LocalDateTime hrResponseDate;
 }

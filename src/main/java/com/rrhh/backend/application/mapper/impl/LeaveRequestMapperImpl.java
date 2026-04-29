@@ -23,7 +23,7 @@ public class LeaveRequestMapperImpl implements LeaveRequestMapper {
                 .status(LeaveStatus.PENDIENTE_JEFE)
                 .justification(dto.getJustification())
                 .evidenceImagePath(evidenceImagePath)
-                .requestDate(java.time.LocalDateTime.now())
+                .requestDate(LocalDateTime.now())
                 .build();
     }
 
@@ -43,7 +43,6 @@ public class LeaveRequestMapperImpl implements LeaveRequestMapper {
                 .hrResponseDate(entity.getHrResponseDate())
                 .build();
     }
-
 
     @Override
     public LeaveRequestHeadDTO toHeadDTO(LeaveRequest entity) {
@@ -83,7 +82,6 @@ public class LeaveRequestMapperImpl implements LeaveRequestMapper {
                 .build();
     }
 
-
     @Override
     public void applyHeadResponse(LeaveRequest entity, LeaveHeadResponseDTO dto, Employee head) {
         entity.setStatus(dto.getStatus());
@@ -93,6 +91,7 @@ public class LeaveRequestMapperImpl implements LeaveRequestMapper {
     }
 
     @Override
+
     public void applyHRResponse(LeaveRequest entity, LeaveHRResponseDTO dto, Employee hr) {
         entity.setStatus(dto.getStatus());
         entity.setHrComment(dto.getComment());
@@ -101,22 +100,16 @@ public class LeaveRequestMapperImpl implements LeaveRequestMapper {
 
     @Override
     public List<LeaveRequestEmployeeDTO> toEmployeeDTOs(List<LeaveRequest> entities) {
-        return entities.stream()
-                .map(this::toEmployeeDTO)
-                .toList();
+        return entities.stream().map(this::toEmployeeDTO).toList();
     }
 
     @Override
     public List<LeaveRequestHeadDTO> toHeadDTOs(List<LeaveRequest> entities) {
-        return entities.stream()
-                .map(this::toHeadDTO)
-                .toList();
+        return entities.stream().map(this::toHeadDTO).toList();
     }
 
     @Override
     public List<LeaveRequestHRDTO> toHRDTOs(List<LeaveRequest> entities) {
-        return entities.stream()
-                .map(this::toHRDTO)
-                .toList();
+        return entities.stream().map(this::toHRDTO).toList();
     }
 }
